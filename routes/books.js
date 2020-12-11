@@ -4,8 +4,7 @@ const Book = require("../models/book");
 const jsonschema = require("jsonschema");
 const createBookSchema = require("../schemas/createbookSchema.json");
 const updateBookSchema = require("../schemas/updateBookSchema.json");
-const { json } = require("express");
-const { update } = require("../models/book");
+
 const ExpressError = require("../expressError");
 
 const router = new express.Router();
@@ -24,9 +23,9 @@ router.get("/", async function (req, res, next) {
 
 /** GET /[id]  => {book: book} */
 
-router.get("/:id", async function (req, res, next) {
+router.get("/:isbn", async function (req, res, next) {
   try {
-    const book = await Book.findOne(req.params.id);
+    const book = await Book.findOne(req.params.isbn);
     return res.json({ book });
   } catch (err) {
     return next(err);
@@ -37,13 +36,13 @@ router.get("/:id", async function (req, res, next) {
 
 router.post("/", async function (req, res, next) {
   try {
-    const valid = jsonschema.validate(req.body, createBookSchema);
+    const result = jsonschema.validate(req.body, createBookSchema);
 
-    if (valid) {
+    if (result.valid) {
       const book = await Book.create(req.body);
       return res.status(201).json({ book });
     } else {
-      const listOfErrors = valid.errors.map(error => error.stack);
+      const listOfErrors = result.errors.map(error => error.stack);
       throw new ExpressError(listOfErrors, 400);
     }
   } catch (err) {
@@ -55,13 +54,13 @@ router.post("/", async function (req, res, next) {
 
 router.put("/:isbn", async function (req, res, next) {
   try {
-    const valid = jsonschema.validate(req.body, updateBookSchema);
+    const result = jsonschema.validate(req.body, updateBookSchema);
 
-    if (valid) {
+    if (result.valid) {
       const book = await Book.update(req.params.isbn, req.body);
       return res.json({ book });
     } else {
-      const listOfErrors = valid.errors.map(error => error.stack);
+      const listOfErrors = result.errors.map(error => error.stack);
       throw new ExpressError(listOfErrors, 400);
     }
   } catch (err) {
